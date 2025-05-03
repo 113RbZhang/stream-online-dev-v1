@@ -128,8 +128,8 @@ public class DwsCartUU {
                                       }
                                   }
                         );
-//        aDs.print("45431224");
-        aDs.sinkTo(SourceSinkUtils.getDorisSink("doris_database_v1", "cart_add_uu_ct_table_v2"));
+        aDs.print("45431224");
+//        aDs.sinkTo(SourceSinkUtils.getDorisSink("doris_database_v1", "cart_add_uu_ct_table_v2"));
 
         env.disableOperatorChaining();
         env.execute();
