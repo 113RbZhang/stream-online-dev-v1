@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
@@ -21,6 +22,11 @@ import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.windowing.WindowFunction;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
+import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
+import org.apache.flink.util.Collector;
 
 import java.time.Duration;
 
@@ -41,7 +47,6 @@ public class DwsNewPagViewWindow {
         SingleOutputStreamOperator<JSONObject> jsonDs = kafkaRead.map(new MapFunction<String, JSONObject>() {
             @Override
             public JSONObject map(String value) throws Exception {
-
                 JSONObject s = null;
                 try {
                     s = JSON.parseObject(value);
@@ -51,12 +56,14 @@ public class DwsNewPagViewWindow {
                 return s;
             }
         });
-        SingleOutputStreamOperator<JSONObject> mapData = jsonDs.map(new RichMapFunction<JSONObject, JSONObject>() {
+//        jsonDs.print();
+        KeyedStream<JSONObject, String> keyedByMidStream = jsonDs.keyBy(jsonObj -> jsonObj.getJSONObject("common").getString("mid"));
+        SingleOutputStreamOperator<JSONObject> mapData = keyedByMidStream.map(
+                new RichMapFunction<JSONObject, JSONObject>() {
             ValueState<String> lastVisitState;
-
             @Override
             public void open(Configuration parameters) throws Exception {
-                ValueStateDescriptor<String> valueStateDescriptor = new ValueStateDescriptor<>("", String.class);
+                ValueStateDescriptor<String> valueStateDescriptor = new ValueStateDescriptor<>("String", String.class);
                 lastVisitState = getRuntimeContext().getState(valueStateDescriptor);
 
             }
@@ -67,18 +74,29 @@ public class DwsNewPagViewWindow {
                 String lastDate = lastVisitState.value();
                 Long ts = jsonObject.getLong("ts");
                 String date = DateFormatUtil.tsToDate(ts);
-                Long uvCt = 0L;
+                long uvCt = 0L;
                 if (StringUtils.isEmpty(lastDate) || !lastDate.equals(date)) {
                     uvCt = 1L;
                     lastVisitState.update(date);
                 }
-                String lastPageId = page.getString("last_page_id");
-                Long svCt = StringUtils.isEmpty(lastPageId) ? 1L : 0L;
+                Long svCt=0L;
+                try {
+                    String lastPageId = page.getString("last_page_id");
+                    if(StringUtils.isEmpty(lastPageId)){
+                        svCt = 1L;
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+
+
                 jsonObject.put("uvCt", uvCt);
                 jsonObject.put("svCt", svCt);
+                jsonObject.put("pvCt", 1L);
                 return jsonObject;
             }
         });
+//        mapData.print();
         //设置水位线
         SingleOutputStreamOperator<JSONObject> watermarksDs = mapData.assignTimestampsAndWatermarks(
                 WatermarkStrategy
@@ -102,7 +120,49 @@ public class DwsNewPagViewWindow {
                 return Tuple4.of(ar, ch, vc, isNew);
             }
         });
-        keyedStream.print();
+//        keyedStream.print();
+        SingleOutputStreamOperator<JSONObject> reduceDs = keyedStream.window(
+                        TumblingEventTimeWindows
+                                .of(Time.seconds(10)))
+                .reduce(new ReduceFunction<JSONObject>() {
+                            @Override
+                            public JSONObject reduce(JSONObject v1, JSONObject v2) throws Exception {
+                                Long v1_dt = v1.getJSONObject("page").getLong("during_time");
+                                Long v2_dt = v2.getJSONObject("page").getLong("during_time");
+                                JSONObject r1 = new JSONObject();
+
+                                r1.put("DurSum", v1_dt + v2_dt);
+                                r1.put("pvCt", v1.getLong("pvCt") + v2.getLong("pvCt"));
+                                r1.put("uvCt", v1.getLong("uvCt") + v2.getLong("uvCt"));
+                                r1.put("svCt", v1.getLong("svCt") + v2.getLong("svCt"));
+                                JSONObject common = v1.getJSONObject("common");
+                                String ar = common.getString("ar");
+                                String ch = common.getString("ch");
+                                String isNew = common.getString("is_new");
+                                String vc = common.getString("vc");
+                                r1.put("ar", ar);
+                                r1.put("ch", ch);
+                                r1.put("is_new", isNew);
+                                r1.put("vc", vc);
+                                return r1;
+                            }
+                        }, new WindowFunction<JSONObject, JSONObject, Tuple4<String, String, String, String>, TimeWindow>() {
+                            @Override
+                            public void apply(Tuple4<String, String, String, String> stringStringStringStringTuple4, TimeWindow window, Iterable<JSONObject> input, Collector<JSONObject> out) throws Exception {
+                                JSONObject json = input.iterator().next();
+                                String stt = DateFormatUtil.tsToDateTime(window.getStart());
+                                String curDate = DateFormatUtil.tsToDate(window.getStart());
+                                String edt = DateFormatUtil.tsToDateTime(window.getEnd());
+
+
+                                json.put("curDate", curDate);
+                                json.put("stt", stt);
+                                json.put("edt", edt);
+                                out.collect(json);
+                            }
+                        }
+                );
+        reduceDs.print();
 
 
         env.execute();
