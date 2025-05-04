@@ -80,7 +80,7 @@ public class DwsLog {
                 "  'sink.enable-2pc' = 'false', " + // 测试阶段可以关闭两阶段提交,方便测试
                 "  'sink.properties.read_json_by_line' = 'true' " +
                 ")");
-        resTable.executeInsert("dws_traffic_source_keyword_page_view_window");
+//        resTable.executeInsert("dws_traffic_source_keyword_page_view_window");
 
     }
 }

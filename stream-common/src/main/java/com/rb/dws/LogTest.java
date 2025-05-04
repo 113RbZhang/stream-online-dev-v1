@@ -1,4 +1,5 @@
-package com.rb.dws;//create table dws_traffic_source_keyword_page_view_window(
+package com.rb.dws;
+//create table dws_traffic_source_keyword_page_view_window(
 //          stt string,
 //          edt string,
 //          cur_date string,

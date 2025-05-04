@@ -25,14 +25,13 @@ import java.util.Collections;
 
 
 /**
- * @Package com.zh.deploy.FlinkJobSubmitToYarnApplicationModel
- * @Author zhou.han
+ * @Package com.deploy.FlinkJobSubmitToYarnApplicationModel
  * @Date 2024/12/25 22:49
  * @description: Flink Job Submit
  */
 public class FlinkJobSubmitToYarnApplicationModel {
     private static final Logger LOG = LoggerFactory.getLogger(FlinkJobSubmitToYarnApplicationModel.class.getName());
-    private static final String FLINK_SUBMIT_USER ="";
+    private static final String FLINK_SUBMIT_USER ="hdfs";
     private static final String FLINK_COMMON_CONF_DIR ="";
     private static final String FLINK_CLUSTER_LIBS_DIR ="";
     private static final String FLINK_REMOTE_JAR_PATH = "hdfs://cdh01:8020/flink-jars/TestYarn-1.0-SNAPSHOT-jar-with-dependencies.jar";

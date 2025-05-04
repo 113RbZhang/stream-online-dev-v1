@@ -172,7 +172,7 @@ public class DwsProvinceOrder {
         resultStream.print();
         //TODO 10.将关联的结果写到Doris中
 
-        resultStream.map(o->o.toJSONString()).sinkTo(SourceSinkUtils.getDorisSink("doris_database_v1", "dws_trade_province_order_window"));
+//        resultStream.map(o->o.toJSONString()).sinkTo(SourceSinkUtils.getDorisSink("doris_database_v1", "dws_trade_province_order_window"));
         env.disableOperatorChaining();
         env.execute();
 

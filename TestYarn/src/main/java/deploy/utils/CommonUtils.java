@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author han.zhou
  * @time: 2021/10/15 9:47
  * @className: CommonUtils
  * @description CommonUtils
@@ -117,11 +116,11 @@ public class CommonUtils {
     }
 
     public static boolean isStage() {
-        return "stage".equals(ConfigUtils.getString("env"));
+        return "stage".equals("ConfigUtils.getString()");
     }
 
     public static boolean isProd() {
-        return "prod".equals(ConfigUtils.getString("env"));
+        return "prod".equals("ConfigUtils.getString()");
     }
 
     public static void printCheckPropEnv(boolean isExit, String... args) {

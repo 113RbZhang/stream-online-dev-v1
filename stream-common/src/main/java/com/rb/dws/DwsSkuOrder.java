@@ -283,7 +283,7 @@ public class DwsSkuOrder {
         }, 60, TimeUnit.SECONDS);
 
         tm_connect.print();
-        tm_connect.map(o->o.toJSONString()).sinkTo(SourceSinkUtils.getDorisSink("doris_database_v1", "dws_trade_sku_order_window"));
+//        tm_connect.map(o->o.toJSONString()).sinkTo(SourceSinkUtils.getDorisSink("doris_database_v1", "dws_trade_sku_order_window"));
         env.disableOperatorChaining();
         env.execute();
     }

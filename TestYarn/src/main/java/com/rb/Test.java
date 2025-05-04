@@ -17,6 +17,9 @@ public class Test {
         env.setParallelism(1);
         DataStreamSource<String> kafkaRead = SourceSinkUtils.cdcRead(env, "online_flink_retail", "*");
         kafkaRead.print();
+
+
+
         env.disableOperatorChaining();
         env.execute();
 
