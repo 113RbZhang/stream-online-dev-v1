@@ -123,6 +123,7 @@ public class DwdTradeOrderDetail {
 //         tEnv.toDataStream(result).print();
 
         List<String> names = result.getResolvedSchema().getColumnNames();
+
         SingleOutputStreamOperator<String> jsonDs = tEnv.toChangelogStream(result)
                 .map(new MapFunction<Row, String>() {
                     @Override

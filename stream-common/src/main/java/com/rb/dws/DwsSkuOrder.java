@@ -46,7 +46,7 @@ public class DwsSkuOrder {
         System.setProperty("HADOOP_USER_NAME", "hdfs");
         env.enableCheckpointing(3000);
         env.setStateBackend(new HashMapStateBackend());
-        env.getCheckpointConfig().setCheckpointStorage("hdfs://cdh01:8020/flink/checkpoints/DwsSkuOrder");
+        env.getCheckpointConfig().setCheckpointStorage("hdfs://cdh01:8020/flink/checkpoints/DwsSkuOrder1");
         DataStreamSource<String> kafkaRead = SourceSinkUtils.kafkaRead(env, "dwd_trade_order_detail_v1");
 //        kafkaRead.print();
         SingleOutputStreamOperator<JSONObject> process = kafkaRead.process(new ProcessFunction<String, JSONObject>() {
@@ -130,7 +130,7 @@ public class DwsSkuOrder {
                                         String edt = DateFormatUtil.tsToDateTime(window.getEnd());
                                         next.put("stt", stt);
                                         next.put("edt", edt);
-                                        next.put("curDate", curDate);
+                                        next.put("cur_date", curDate);
                                         out.collect(next);
 
                                     }
@@ -283,7 +283,7 @@ public class DwsSkuOrder {
         }, 60, TimeUnit.SECONDS);
 
         tm_connect.print();
-//        tm_connect.map(o->o.toJSONString()).sinkTo(SourceSinkUtils.getDorisSink("doris_database_v1", "dws_trade_sku_order_window"));
+        tm_connect.map(o->o.toJSONString()).sinkTo(SourceSinkUtils.getDorisSink("doris_database_v1", "dws_trade_sku_order_window"));
         env.disableOperatorChaining();
         env.execute();
     }

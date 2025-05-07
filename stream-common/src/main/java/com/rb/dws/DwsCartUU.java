@@ -41,7 +41,7 @@ public class DwsCartUU {
         env.setParallelism(1);
         env.enableCheckpointing(3000);
         env.setStateBackend(new HashMapStateBackend());
-        env.getCheckpointConfig().setCheckpointStorage("hdfs://cdh01:8020/flink/checkpoints/cartuu1");
+        env.getCheckpointConfig().setCheckpointStorage("hdfs://cdh01:8020/flink/checkpoints/cartuu55");
         System.setProperty("HADOOP_USER_NAME", "hdfs");
 
         StreamTableEnvironment tEnv = StreamTableEnvironment.create(env);
@@ -79,7 +79,7 @@ public class DwsCartUU {
                 }
             }
         });
-        waterData.print();
+//        waterData.print();
         AllWindowedStream<JSONObject, TimeWindow> windowDs = uuDs.windowAll(TumblingEventTimeWindows.of(Time.seconds(10)));
         SingleOutputStreamOperator<String> aDs =
                 windowDs.
@@ -129,7 +129,7 @@ public class DwsCartUU {
                                   }
                         );
         aDs.print("45431224");
-//        aDs.sinkTo(SourceSinkUtils.getDorisSink("doris_database_v1", "cart_add_uu_ct_table_v2"));
+        aDs.sinkTo(SourceSinkUtils.getDorisSink("doris_database_v1", "cart_add_uu_ct_table_v2"));
 
         env.disableOperatorChaining();
         env.execute();
