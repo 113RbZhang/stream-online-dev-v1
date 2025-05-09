@@ -29,7 +29,7 @@ public class BlackList {
     public static void main(String[] args) {
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        CheckPointUtils.newSetCk(env, "BlackList");
+        CheckPointUtils.setCk(env);
 
         DataStreamSource<String> kafkaRead = SourceSinkUtils.kafkaRead(env, "black_list_processing_data_v1");
 
